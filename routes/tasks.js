@@ -8,12 +8,18 @@ const {
   getTask,
   updateTask,
   deleteTask,
+  editTask,
 } = require("../controllers/tasks");
 
 // GET and POST /api/v1/tasks
 router.route("/").get(getAllTasks).post(createTask);
-// GET, PATCH and DELETE /api/v1/tasks/:id
-router.route("/:id").get(getTask).patch(updateTask).delete(deleteTask);
+// GET, PATCH, DELETE, and PUT /api/v1/tasks/:id
+router
+  .route("/:id")
+  .get(getTask)
+  .patch(updateTask)
+  .delete(deleteTask)
+  .put(editTask);
 
 // Export the router
 module.exports = router;

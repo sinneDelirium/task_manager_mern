@@ -3,6 +3,7 @@ const app = express();
 const tasks = require("./routes/tasks");
 const logger = require("morgan");
 require("dotenv").config();
+const notFound = require("./middleware/not-found");
 
 const connectDB = require("./db/connect");
 
@@ -15,10 +16,12 @@ app.use(express.json()); // allow use of req.body
 
 // routes
 app.get("/", (req: any, res: any) => {
-  res.send("Task Manager App");
+  res.redirect("/index.html");
 });
 
 app.use("/api/v1/tasks", tasks); // /api/v1/tasks route and controller
+
+app.use(notFound); // not found middleware API
 
 const start = async () => {
   try {

@@ -45,6 +45,7 @@ const getTask = async (req, res) => {
 };
 
 // PATCH /api/tasks/:id
+// Partial updates possible with PATCH (can ignore completed field)
 const updateTask = async (req, res) => {
   const id = req.params.id;
   const data = req.body; // TS need to check type?
@@ -93,6 +94,36 @@ const deleteTask = async (req, res) => {
     });
 };
 
+// PUT /api/tasks/:id
+// Overwrites specific fields in the document
+// If "completed" in Tasks.js model is set to not have a default value,
+// it will not be included in the model if not provided in the PUT request
+// Does not seem to work with overwrite: true, just acts like PATCH
+const editTask = async (req, res) => {
+  const id = req.params.id;
+  const data = req.body; // TS need to check type?
+
+  // Task id validation
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: `Invalid task id: ${id}` });
+  }
+
+  await Task.findOneAndUpdate({ _id: id }, data, {
+    new: true,
+    runValidators: true,
+    overwrite: true, // Overwrite the entire document for PUT request
+  })
+    .then((task) => {
+      if (!task) {
+        return res.status(404).json({ message: `Task ${id} not found` });
+      }
+      return res.status(200).json({ task }).send();
+    })
+    .catch((err) => {
+      return res.status(500).json({ message: err });
+    });
+};
+
 // Exports for routes/tasks.js
 module.exports = {
   getAllTasks,
@@ -100,4 +131,5 @@ module.exports = {
   getTask,
   updateTask,
   deleteTask,
+  editTask,
 };
