@@ -1,7 +1,13 @@
-const mongoose = require("mongoose");
+import { model, Model, Schema } from "mongoose";
+
+// Create interface representing a document
+interface ITask {
+  name: string;
+  completed?: boolean;
+}
 
 // Create schema for a task
-const TaskSchema = new mongoose.Schema({
+const TaskSchema: Schema = new Schema<ITask>({
   name: {
     type: String,
     required: [true, "must provide name"],
@@ -15,4 +21,6 @@ const TaskSchema = new mongoose.Schema({
 });
 
 // Export model called Task with schema TaskSchema
-module.exports = mongoose.model("Task", TaskSchema);
+const Task: Model<ITask> = model<ITask>("Task", TaskSchema);
+
+module.exports = Task;
