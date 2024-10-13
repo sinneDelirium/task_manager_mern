@@ -3,7 +3,8 @@ const app = express();
 const tasks = require("./routes/tasks");
 const logger = require("morgan");
 require("dotenv").config();
-const notFound = require("./middleware/not-found");
+const notFound = require("./middleware/not_found");
+const errorHandler = require("./middleware/error_handler");
 
 const connectDB = require("./db/connect");
 
@@ -22,6 +23,7 @@ app.get("/", (req: any, res: any) => {
 app.use("/api/v1/tasks", tasks); // /api/v1/tasks route and controller
 
 app.use(notFound); // not found middleware API
+app.use(errorHandler); // error handling middleware
 
 const start = async () => {
   try {

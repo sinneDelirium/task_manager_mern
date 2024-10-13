@@ -1,98 +1,56 @@
-const mongoose = require("mongoose");
+const asyncWrapper = require("../middleware/async");
 const Task = require("../models/Task");
+const { createCustomError } = require("../errors/custom_error");
 
 // GET /api/tasks
-const getAllTasks = async (req, res) => {
-  await Task.find({})
-    .then((tasks) => {
-      return res.status(200).json({ tasks }).send();
-    })
-    .catch((err) => {
-      return res.status(500).json({ message: err });
-    });
-};
+const getAllTasks = asyncWrapper(async (req, res) => {
+  const tasks = await Task.find({});
+  res.status(200).json({ tasks }).send();
+});
 
 // POST /api/tasks
-const createTask = async (req, res) => {
-  await Task.create(req.body)
-    .then((task) => {
-      return res.status(201).json({ task }).send();
-    })
-    .catch((err) => {
-      return res.status(500).json({ message: err });
-    });
-};
+const createTask = asyncWrapper(async (req, res) => {
+  const task = await Task.create(req.body);
+  res.status(201).json({ task }).send();
+});
 
 // GET /api/tasks/:id
-const getTask = async (req, res) => {
+const getTask = asyncWrapper(async (req, res, next) => {
   const id = req.params.id;
-
-  // Task id validation
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid task id: ${id}` });
+  const task = await Task.findOne({ _id: id });
+  if (!task) {
+    return next(createCustomError(`Task ${id} not found`, 404));
   }
-
-  await Task.findById(id)
-    .then((task) => {
-      if (!task) {
-        return res.status(404).json({ message: `Task ${id} not found` });
-      }
-      return res.status(200).json({ task });
-    })
-    .catch((err) => {
-      return res.status(500).json({ message: err });
-    });
-};
+  res.status(200).json({ task }).send();
+});
 
 // PATCH /api/tasks/:id
 // Partial updates possible with PATCH (can ignore completed field)
-const updateTask = async (req, res) => {
+const updateTask = asyncWrapper(async (req, res, next) => {
   const id = req.params.id;
-  const data = req.body; // TS need to check type?
-
-  // Task id validation
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid task id: ${id}` });
-  }
-
-  await Task.findOneAndUpdate({ _id: id }, data, {
+  const data = req.body;
+  const task = await Task.findOneAndUpdate({ _id: id }, data, {
     new: true,
     runValidators: true,
-  })
-    .then((task) => {
-      if (!task) {
-        return res.status(404).json({ message: `Task ${id} not found` });
-      }
-      return res.status(200).json({ task }).send();
-    })
-    .catch((err) => {
-      return res.status(500).json({ message: err });
-    });
-};
+  });
+  if (!task) {
+    return next(createCustomError(`Task ${id} not found`, 404))
+  }
+  res.status(200).json({ task }).send();
+});
 
 // DELETE /api/tasks/:id
-const deleteTask = async (req, res) => {
+const deleteTask = asyncWrapper(async (req, res, next) => {
   const id = req.params.id;
-
-  // Task id validation
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid task id: ${id}` });
+  const task = await Task.findOneAndDelete({ _id: id });
+  if (!task) {
+    return next(createCustomError(`Task ${id} not found`, 404))
   }
-
-  await Task.findByIdAndDelete(id)
-    .then((task) => {
-      if (!task) {
-        return res.status(404).json({ message: `Task ${id} not found` });
-      }
-      return res
-        .status(200)
-        .json({ message: `Task ${id} deleted` })
-        .send();
-    })
-    .catch((err) => {
-      return res.status(500).json({ message: err });
-    });
-};
+  res
+    .status(200)
+    .json({ message: `Task ${id} deleted`, task: task })
+    .send();
+});
 
 // PUT /api/tasks/:id
 // Overwrites specific fields in the document
@@ -101,12 +59,7 @@ const deleteTask = async (req, res) => {
 // Does not seem to work with overwrite: true, just acts like PATCH
 const editTask = async (req, res) => {
   const id = req.params.id;
-  const data = req.body; // TS need to check type?
-
-  // Task id validation
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: `Invalid task id: ${id}` });
-  }
+  const data = req.body;
 
   await Task.findOneAndUpdate({ _id: id }, data, {
     new: true,
