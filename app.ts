@@ -10,10 +10,11 @@ const port = process.env.PORT || 3000;
 
 // middleware
 app.use(logger("dev")); // log requests to the console using morgan
+app.use(express.static("./public")); // serve static files
 app.use(express.json()); // allow use of req.body
 
 // routes
-app.get("/", (req, res) => {
+app.get("/", (req: any, res: any) => {
   res.send("Task Manager App");
 });
 
